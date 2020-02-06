@@ -31,8 +31,9 @@ class Hodgkin_Huxley:
         self.h = 0.6
         self.n = 0.32
 
-    def I_inj(self):
-        self.step_current = np.piecewise(self.time, [(self.time< 500)*(self.time>=200), (self.time< 950)*(self.time>=700)], [10,50])
+    def I_inj(self, t):
+        return np.piecewise(t, [(t < 500) * (t >= 200), (t < 950) * (t >= 700)], [10, 50])
+        #return np.piecewise(self.time, [(self.time< 500)*(self.time>=200), (self.time< 950)*(self.time>=700)], [10,50])
 
     # potassium rate functions
     def a_n(self):
@@ -56,13 +57,13 @@ class Hodgkin_Huxley:
 
     # current functions
     def K_current(self):
-        self.K_current =  self.g_K * self.n**4 * (self.V_m - self.V_K)
+        return self.g_K * self.n**4 * (self.V_m - self.V_K)
 
     def Na_current(self):
-        self.Na_current = self.g_Na * self.m**3 * self.h * (self.V_m - self.V_Na)
+        return self.g_Na * self.m**3 * self.h * (self.V_m - self.V_Na)
 
     def leak_current(self):
-        self.leakcurrent = self.g_l * (self.V_m - self.V_l)
+        return self.g_l * (self.V_m - self.V_l)
 
     def hh_model(self, y, t, parameters):
         '''Takes in y dynamics variables, V_m, n, m and h. Array of time steps to integrate over.
@@ -70,25 +71,32 @@ class Hodgkin_Huxley:
 
         Returns values for derivatives w.r.t time for Voltage and ion rate coefficience n, m and h.
         '''
-        self.V_m, self.n, self.m, selfh = y
+        self.V_m, self.n, self.m, self.h = y
         self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m = parameters
 
         # Total current through the membrane
-        self.dVdt = self.I_inj() - self.K_current() - self.Na_current() - self.leak_current() / self.C_m
+        dVdt = self.I_inj(t) - self.K_current() - self.Na_current() - self.leak_current() / self.C_m
 
         # Derivative of n, potassium channel activation, w.r.t. time
-        self.dndt = self.a_n() * (1 - self.n) - self.B_n() * self.n
+        dndt = self.a_n() * (1 - self.n) - self.B_n() * self.n
 
         # Derivative of m, sodium channel activion, w.r.t. time
-        self.dmdt = self.a_m() * (1 - self.m) - self.B_m() * self.m
+        dmdt = self.a_m() * (1 - self.m) - self.B_m() * self.m
 
         # Derivative of h, sodium channel in-activion, w.r.t. time
 
-        self.dhdt = self.a_h() * (1 - self.h) - self.B_h() * self.h
+        dhdt = self.a_h() * (1 - self.h) - self.B_h() * self.h
+
+        return [dVdt, dndt, dmdt, dhdt]
 
     def simulate(self):
 
         y0 = [self.V_m, self.n, self.m, self.h]
         parameters = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
 
-        self.sol = odeint(self.hh_model, y0, self.time, args=(parameters,))
+        sol = odeint(self.hh_model, y0, self.time, args=(parameters,))
+        return sol
+
+model = Hodgkin_Huxley()
+model.simulate()
+#print(model.sol)
