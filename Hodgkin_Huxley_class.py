@@ -98,5 +98,12 @@ class Hodgkin_Huxley:
         return sol
 
 model = Hodgkin_Huxley()
-model.simulate()
+sol = model.simulate()
 #print(model.sol)
+
+print(sol.shape)
+
+for i in range(4):
+    plt.figure()
+    plt.plot(model.time, sol[:,i])
+    plt.show()
