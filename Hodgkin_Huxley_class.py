@@ -3,7 +3,7 @@ import scipy as sp
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 
-class Hodgkin_Huxley(self):
+class Hodgkin_Huxley:
 
 
     def __init__(self):
@@ -31,37 +31,37 @@ class Hodgkin_Huxley(self):
         self.h = 0.6
         self.n = 0.32
 
-    def I_inj(self.time):
+    def I_inj(self):
         self.step_current = np.piecewise(self.time, [(self.time< 500)*(self.time>=200), (self.time< 950)*(self.time>=700)], [10,50])
 
     # potassium rate functions
-    def _a_n(self.self.V_m):
+    def _a_n(self):
         return 0.01 * (self.V_m + 55) / (1 - np.exp(-(self.V_m + 55.0) / 10)) # + 1.E-7)
 
-    def _B_n(self.V_m):
+    def _B_n(self):
         return 0.125 * np.exp(-(self.V_m + 65.0) / 80)
 
     # sodium rate functions
-    def _a_m(self.V_m):
+    def _a_m(self):
         return 0.1 * (40 + self.V_m) / (1.0 - np.exp(-(self.V_m + 40.0) / 10.0)) # + 1.E-7)
 
-    def _a_h(self.V_m):
+    def _a_h(self):
         return 0.07 * np.exp(-(self.V_m + 65.0) / 20.0)
 
-    def _B_m(self.V_m):
+    def _B_m(self):
         return 4 * np.exp(-(self.V_m + 65.0) / 18.0)
 
-    def _B_h(self.V_m):
+    def _B_h(self):
         return 1 / (np.exp(-(35 + self.V_m) / 10) + 1)
 
     # current functions
-    def K_current(self.g_K,self.n,self.V_m,self.V_K):
+    def K_current(self):
         self.K_current =  self.g_K * self.n**4 * (self.V_m - self.V_K)
 
-    def Na_current(self.g_Na, self.m, self.h, self.V_m, self.V_Na):
+    def Na_current(self):
         self.Na_current = self.g_Na * self.m**3 * self.h * (self.V_m - self.V_Na)
 
-    def leak_current(self.g_l, self.V_m, self.V_l):
+    def leak_current(selfl):
         self.leakcurrent = self.g_l * (self.V_m - self.V_l)
 
     def hh_model(y, t, parameters):
@@ -86,9 +86,9 @@ class Hodgkin_Huxley(self):
 
         self.dhdt = self.a_h(self.V_m) * (1 - self.h) - self.B_h(self.V_m) * self.h
 
-    def simulate(self)
+    def simulate(self):
 
         y0 = [self.V_m, self.n, self.m, self.h]
         parameters = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
 
-        sol = odeint(hh_model,y0, time, args=(parameters,))
+        self.sol = odeint(hh_model,y0, time, args=(parameters,))
