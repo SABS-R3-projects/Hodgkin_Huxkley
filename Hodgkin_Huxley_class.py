@@ -25,6 +25,7 @@ class Hodgkin_Huxley:
 
         # Time to integrate over
         self.time = np.arange(0.0, 1000.0, 0.1)
+        self.default_params = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
 
         # ion variables
         self.m = 0.05
@@ -89,21 +90,29 @@ class Hodgkin_Huxley:
 
         return [dVdt, dndt, dmdt, dhdt]
 
-    def simulate(self):
+    def simulate(self, parameters, times):
 
         y0 = [self.V_m, self.n, self.m, self.h]
-        parameters = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
+        #parameters = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
 
-        sol = odeint(self.hh_model, y0, self.time, args=(parameters,))
-        return sol
+        sol = odeint(self.hh_model, y0, times, args=(parameters,))
+        return np.array(sol)
 
-model = Hodgkin_Huxley()
-sol = model.simulate()
-#print(model.sol)
+    def n_parameters(self):
+        return 6
 
-print(sol.shape)
+    def n_outputs(self):
+        return 4
 
-for i in range(4):
-    plt.figure()
-    plt.plot(model.time, sol[:,i])
-    plt.show()
+
+if __name__ == '__main__':
+    model = Hodgkin_Huxley()
+    sol = model.simulate(model.time, model.default_params)
+    #print(model.sol)
+
+    #print(sol.shape)
+
+    for i in range(4):
+        plt.figure()
+        plt.plot(model.time, sol)
+        plt.show()
