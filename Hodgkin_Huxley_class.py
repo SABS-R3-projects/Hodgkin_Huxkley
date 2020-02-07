@@ -3,10 +3,18 @@ import scipy as sp
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 
+# Fluid Limit Theorems for Stochastic Hybrid
+
 class Hodgkin_Huxley:
 
 
     def __init__(self):
+
+        self.Vm0 = -70.0
+        self.m0 = 0.05
+        self.h0 = 0.6
+        self.n0 = 0.32
+
         # Membrane capacitance and potential
         self.C_m = 1.0
         self.V_m = -70.0
@@ -32,8 +40,13 @@ class Hodgkin_Huxley:
         self.h = 0.6
         self.n = 0.32
 
+        self.Ifunc = None
+
     def I_inj(self, t):
-        return np.piecewise(t, [(t < 500) * (t >= 200), (t < 950) * (t >= 700)], [10, 50])
+        try:
+            return self.Ifunc(t)
+        except:
+            return np.piecewise(t, [(t < 500) * (t >= 200), (t < 950) * (t >= 700)], [10, 50])
         #return np.piecewise(self.time, [(self.time< 500)*(self.time>=200), (self.time< 950)*(self.time>=700)], [10,50])
 
     # potassium rate functions
@@ -92,8 +105,8 @@ class Hodgkin_Huxley:
 
     def simulate(self, parameters, times):
 
-        y0 = [self.V_m, self.n, self.m, self.h]
-        #parameters = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
+        y0 = [self.Vm0, self.n0, self.m0, self.h0] #initial conditions
+        # parameters = [self.g_K, self.V_K, self.g_Na, self.V_Na, self.g_l, self.C_m]
 
         sol = odeint(self.hh_model, y0, times, args=(parameters,))
         return np.array(sol)

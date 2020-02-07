@@ -1,12 +1,13 @@
 import pints
 import Hodgkin_Huxley_class as hh
+import Fitzhugh_Nagumo_class as fn
 import numpy as np
 import matplotlib.pyplot as plt
 
 class SingleOutputInverseProblem:
     def __init__(self, model , times, values):
 
-        self.problem = pints.MultiOutputProblem(model, times, values)
+        self.problem = pints.SingleOutputProblem(model, times, values)
         self.objective_function = pints.SumOfSquaresError(self.problem)
         self.optimiser = pints.CMAES
         self.initial_parameter_uncertainty = None
@@ -72,27 +73,56 @@ class SingleOutputInverseProblem:
         min_values, max_values = boundaries[0], boundaries[1]
         self.parameter_boundaries = pints.RectangularBoundaries(min_values, max_values)
 
-model = hh.Hodgkin_Huxley()
-times = model.time[:1000]
-param = np.array(model.default_params)
-sol = model.simulate(param, times)
-initial_guess = param + 0.1*np.abs(param)*np.random.randn(param.shape[0])
 
-bounds = [param- np.abs(0.5*param), param + np.abs(0.5*param)]
-print(times)
-problem = SingleOutputInverseProblem(model, times, sol)
-problem.set_parameter_boundaries(bounds)
-problem.find_optimal_parameter(initial_guess)
+model = 2
 
-print(param)
-print(problem.estimated_parameters)
+if model == 1:
+    model = hh.Hodgkin_Huxley()
+    times = model.time[:1000]
+    param = np.array(model.default_params)
+    sol = model.simulate(param, times)
+    initial_guess = param + 0.1*np.abs(param)*np.random.randn(param.shape[0])
 
-sol2 = model.simulate(problem.estimated_parameters, times)
+    bounds = [param- np.abs(0.5*param), param + np.abs(0.5*param)]
+    print(times)
+    problem = SingleOutputInverseProblem(model, times, sol)
+    problem.set_parameter_boundaries(bounds)
+    problem.find_optimal_parameter(initial_guess)
 
-plt.figure()
-plt.plot(sol[:,0])
-plt.show()
-plt.figure()
-plt.plot(sol2[:,0])
-plt.show()
+    print(param)
+    print(problem.estimated_parameters)
+
+    sol2 = model.simulate(problem.estimated_parameters, times)
+
+    plt.figure()
+    plt.plot(sol[:,0])
+    plt.show()
+    plt.figure()
+    plt.plot(sol2[:,0])
+    plt.show()
+
+if model == 2:
+    model = fn.Fitzhugh_Nagumo()
+    times = np.arange(0,1000,0.1)
+    param = np.array(model.default_params)
+    sol = model.simulate(param, times)
+    initial_guess = param + 0.1 * np.abs(param) * np.random.randn(param.shape[0])
+
+    bounds = [param - np.abs(0.5 * param), param + np.abs(0.5 * param)]
+    print(times)
+    problem = SingleOutputInverseProblem(model, times, sol)
+    problem.set_parameter_boundaries(bounds)
+    problem.find_optimal_parameter(initial_guess)
+
+    print(param)
+    print(problem.estimated_parameters)
+
+    sol2 = model.simulate(problem.estimated_parameters, times)
+
+    plt.figure()
+    plt.plot(sol[:, 0])
+    plt.show()
+    plt.figure()
+    plt.plot(sol2[:, 0])
+    plt.show()
 

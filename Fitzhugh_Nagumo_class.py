@@ -9,23 +9,33 @@ class Fitzhugh_Nagumo(object):
     '''
 
     def __init__(self):
-        self.I_inj = 0.34
+
+        self.Ifunc = None
+        #self.I_inj = 0.34
+
         self.a = 0.7
         self.b = 0.8
         self.c = 10
+        self.default_params = np.array([self.a, self.b, self.c])
 
         # state variables
         # membrane potential
-        self.V_m = 2.0
+        self.V_m0 = 2.0
 
         # recovery constant
-        self.w = 1.0
+        self.w0 = 1.0
 
         self.t_0 = np.arange(0.0, 20, 0.01)
 
         # time to simulate over
         self.t_0 = np.arange(0.0, 5, 0.01)
     pass
+
+    def I_inj(self, t):
+        try:
+            return self.Ifunc(t)
+        except:
+            return 0.5
 
     def Fitzhugh_Nagumo_model(self, y0, t, parameters):
         """Fitzhugh_Nagumo model
@@ -36,106 +46,112 @@ class Fitzhugh_Nagumo(object):
         self.V_m, self.w = y0
         self.a, self.b, self.c = parameters
 
-        dvdt = self.c * (self.V_m - self.w - np.power(self.V_m,3)/3 + self.I_inj)
+        dvdt = (self.V_m - self.w - np.power(self.V_m,3)/3 + self.I_inj(t)) #* self.c
 
-        dwdt = self.V_m + self.a - self.b * self.w
+        dwdt = (self.V_m + self.a - self.b * self.w)/self.c
 
         return [dvdt, dwdt]
 
-    def simulate(self):
+    def simulate(self, parameters, times):
         """Solve the Fitzhugh-Nagumo model
 
         """
 
-        y0 = [self.V_m, self.w]
-        parameters = [self.a, self.b, self.c]
+        y0 = [self.V_m0, self.w0]
 
-        sol = odeint(self.Fitzhugh_Nagumo_model, y0, self.time, args=(parameters,))
+        sol = integrate.odeint(self.Fitzhugh_Nagumo_model, y0, times, args=(parameters,))
+        self.solution = sol
 
-        return sol
+        return sol[:,0] #first component
 
+    def n_parameters(self):
+        return 3
 
-
-I = 0.34 #external stimulus
-a = 0.7
-b = 0.8
-c = 10
-
-def FHN(state, t):
-    """
-    FitzHugh-Nagumo Equations
-    u : the membrane potential
-    v : a recovery variable
-    """
-    u, v = state
-    dot_u = c * (-v + u - pow(u,3)/3 + I)
-    dot_v = u - b * v + a
-    return dot_u, dot_v
-
-#initial state
-u0 = 2.0
-v0 = 1.0
-
-t = np.arange(0.0, 5, 0.01)
+    def n_outputs(self):
+        return 1
 
 
-t0 = np.arange(0.0, 20, 0.01)
-y_all = integrate.odeint(FHN, [u0, v0], t0)
-u_all = y_all[:,0]
-v_all = y_all[:,1]
+if __name__ == '__main__':
+    I = 0.34 #external stimulus
+    a = 0.7
+    b = 0.8
+    c = 10
 
-fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10,4))
-fig.suptitle("FitzHugh-Nagumo Model")
+    def FHN(state, t):
+        """
+        FitzHugh-Nagumo Equations
+        u : the membrane potential
+        v : a recovery variable
+        """
+        u, v = state
+        dot_u = c * (-v + u - pow(u,3)/3 + I)
+        dot_v = u - b * v + a
+        return dot_u, dot_v
 
-len_t = len(t)
-dt = 5 #time steps
+    #initial state
+    u0 = 2.0
+    v0 = 1.0
 
-# 1step
-def update(i):
-    global y, y0
+    t = np.arange(0.0, 5, 0.01)
 
-    # initial y0
-    if i ==0:
-        y0 = [u0, v0]
 
-    # Delete Graph
-    ax1.cla()
-    ax2.cla()
+    t0 = np.arange(0.0, 20, 0.01)
+    y_all = integrate.odeint(FHN, [u0, v0], t0)
+    u_all = y_all[:,0]
+    v_all = y_all[:,1]
 
-    # Solve ODE
-    y = integrate.odeint(FHN, y0, t)
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10,4))
+    fig.suptitle("FitzHugh-Nagumo Model")
 
-    # Update y0
-    y0 = (y[dt,0], y[dt,1])
+    len_t = len(t)
+    dt = 5 #time steps
 
-    # get u and v
-    u = y[:,0]
-    v = y[:,1]
+    # 1step
+    def update(i):
+        global y, y0
 
-    #Phase Space
-    ax1.plot(u_all, v_all, color="k", dashes=[1, 6])
-    ax1.plot(u[len_t-20:len_t-1], v[len_t-20:len_t-1],color="r")
-    ax1.plot(u[len_t-1],v[len_t-1],'o--', color="r") #uのmarker
-    ax1.set_xlabel("u : membrane potential / Volt")
-    ax1.set_ylabel("v : recovery variable")
-    ax1.set_xlim([-2.2,2.2])
-    ax1.set_ylim([-0.5,1.5])
-    ax1.set_title("Phase Space")
-    ax1.grid()
+        # initial y0
+        if i ==0:
+            y0 = [u0, v0]
 
-    #Membrane Potential
-    ax2.plot(t, u, label="u : membrane potential", color="#ff7f0e")
-    ax2.plot(t, v, label="v : recovery variable", color="#1f77b4")
-    ax2.plot(t[len_t-1], u[len_t-1],'o--', color="#ff7f0e") #uのmarker
-    ax2.plot(t[len_t-1], v[len_t-1],'o--', color="#1f77b4") #vのmarker
-    ax2.set_title("Membrane Potential / Volt")
-    ax2.set_ylim([-2.2,2.0])
-    ax2.grid()
-    ax2.legend(bbox_to_anchor=(0, 1),
-               loc='upper left',
-               borderaxespad=0)
+        # Delete Graph
+        ax1.cla()
+        ax2.cla()
 
-ani = animation.FuncAnimation(fig, update, interval=100,
-                              frames=300)
-plt.show()
-#ani.save("FitzHugh-Nagumo_all.mp4") #save
+        # Solve ODE
+        y = integrate.odeint(FHN, y0, t)
+
+        # Update y0
+        y0 = (y[dt,0], y[dt,1])
+
+        # get u and v
+        u = y[:,0]
+        v = y[:,1]
+
+        #Phase Space
+        ax1.plot(u_all, v_all, color="k", dashes=[1, 6])
+        ax1.plot(u[len_t-20:len_t-1], v[len_t-20:len_t-1],color="r")
+        ax1.plot(u[len_t-1],v[len_t-1],'o--', color="r") #uのmarker
+        ax1.set_xlabel("u : membrane potential / Volt")
+        ax1.set_ylabel("v : recovery variable")
+        ax1.set_xlim([-2.2,2.2])
+        ax1.set_ylim([-0.5,1.5])
+        ax1.set_title("Phase Space")
+        ax1.grid()
+
+        #Membrane Potential
+        ax2.plot(t, u, label="u : membrane potential", color="#ff7f0e")
+        ax2.plot(t, v, label="v : recovery variable", color="#1f77b4")
+        ax2.plot(t[len_t-1], u[len_t-1],'o--', color="#ff7f0e") #uのmarker
+        ax2.plot(t[len_t-1], v[len_t-1],'o--', color="#1f77b4") #vのmarker
+        ax2.set_title("Membrane Potential / Volt")
+        ax2.set_ylim([-2.2,2.0])
+        ax2.grid()
+        ax2.legend(bbox_to_anchor=(0, 1),
+                   loc='upper left',
+                   borderaxespad=0)
+
+    ani = animation.FuncAnimation(fig, update, interval=100,
+                                  frames=300)
+    plt.show()
+    #ani.save("FitzHugh-Nagumo_all.mp4") #save
