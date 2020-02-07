@@ -83,3 +83,23 @@ class Fitzhugh_Nagumo(object):
 
         return sol
 
+    def phase_space(self):
+
+        # Plot phase-plane
+        solution = self.simulate()
+        v = np.linspace(-2.2,2,len(solution))
+        VandW = np.array(solution)
+        plt.plot(VandW[:,0], VandW[:,1])
+        plt.plot(v, v - (v**3)/3 + self.I_inj, 'k--')
+        plt.plot(v, (v-self.a)/self.b, 'g--')
+        plt.xlabel('V: excitation param')
+        plt.ylabel('W: relaxation param')
+        plt.title('Fitzhugh Nagumo phase-plane')
+        plt.legend(['Parameters', 'dvdt=0 nullcline', 'dwdt=0 nullcline'])
+        plt.ylim(-0.6,1.5)
+        plt.show()
+
+        
+if __name__ == "__main__":
+    Fitzhugh_Nagumo().phase_space()
+    
